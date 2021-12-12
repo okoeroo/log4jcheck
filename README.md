@@ -1,4 +1,7 @@
-# Northwave Log4j CVE-2021-44228 checker
+# Log4j CVE-2021-44228 checker
+
+Revamped version.
+
 
 Friday 10 December 2021 a new Proof-of-Concept [1] addressing a Remote code Execution (RCE) vulnerability in the Java library 'log4j' [2] was published. This vulnerability has not been disclosed to the developers of the software upfront. The vulnerability is being tracked as CVE-2021-44228 [3]. More information on the vulnerability can be found in the Northwave Threat Response [4].
 
