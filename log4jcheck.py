@@ -21,7 +21,7 @@ def argparsing(exec_file):
     parser.add_argument("--reply-fqdn",
                         dest='replyfqdn',
                         help="Reply FQDN",
-                        default='log4jdnsreq.koeroo.net',
+                        default='log4jdnsreq.cyberz.nl',
                         type=str)
     parser.add_argument("--target",
                         dest='target',
