@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # With inspirations from Northwave and KPN, combined with my own styling
 
@@ -35,8 +35,7 @@ def argparsing(exec_file):
                         type=int)
 
 
-    args = parser.parse_args()
-    return args
+    return parser
 
 def check1(schema, url_input, reply_host, header_name, payl, timeout):
     logging.info(f"check1: Sending request to {schema}{url_input.hostname} using {header_name} injecting {payl}")
@@ -91,7 +90,13 @@ def payload_generation(url_input, reply_host, timeout):
 
 def main():
     # Arguments parsing
-    args = argparsing(os.path.basename(__file__))
+    argparser = argparsing(os.path.basename(__file__))
+    args = argparser.parse_args()
+
+    # No target, no dice
+    if not args.target:
+        argparser.print_help()
+        sys.exit(1)
 
     # Parse URL
     url_input = urlparse(args.target)
