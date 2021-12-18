@@ -94,7 +94,7 @@ def check1(schema, url_input, reply_host, payl, timeout):
     gh = generate_header_value(payl)
     for key, value in gh.items():
         headers = {}
-        headers['X-Api-Version'] = "42"
+        headers['X-Api-Version'] = "2"
         headers[key] = value
         send_request(f"{schema}{url_input.netloc}", headers, timeout)
 
@@ -103,7 +103,9 @@ def check1(schema, url_input, reply_host, payl, timeout):
 def check2(schema, url_input, reply_host, payl, timeout):
     logging.info(f"check2: Sending request to {schema}{url_input.hostname} injecting {payl}")
 
-    send_request(f"{schema}{url_input.netloc}/{payl}", {}, timeout)
+    headers = {}
+    headers['X-Api-Version'] = "2"
+    send_request(f"{schema}{url_input.netloc}/{payl}", headers, timeout)
 
 
 def deliver(args, url_input, reply_host, payl, timeout):
